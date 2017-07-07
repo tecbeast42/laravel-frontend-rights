@@ -1,0 +1,21 @@
+{
+    "name": "tecbeast/laravel-frontend-rights",
+    "description": "A package for Laravel 5.1+ where you can restrict certain routes from frontend to a set of roles.",
+    "type": "library",
+    "license": "MIT",
+    "require": {
+        "laravel/framework": ">=5.1.0",
+        "php": ">=5.5.9"
+    },
+    "repositories": [
+        {
+            "type": "vcs",
+            "url": "https://github.com/tecbeast42/laravel-frontend-rights"
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "TecBeast\\FrontendRights\\": "src/"
+        }
+    }
+}
