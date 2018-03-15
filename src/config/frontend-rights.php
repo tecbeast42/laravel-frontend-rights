@@ -13,7 +13,7 @@ return [
     /**
      * The route for the controller
      */
-    'route' => '/api/v1/resource/access',
+    'route' => '/api/v2/resource/access',
 
     /**
      * Middlewares or middleware groups for the route

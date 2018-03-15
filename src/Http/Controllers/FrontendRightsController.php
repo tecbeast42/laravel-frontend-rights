@@ -3,12 +3,54 @@ namespace TecBeast\FrontendRights\Http\Controllers;
 
 use Illuminate\Routing\Controller;
 use Illuminate\Http\Request;
+use Illuminate\Foundation\Validation\ValidatesRequests;
 use TecBeast\FrontendRights\Exceptions\TooManyModelsException;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 
 class FrontendRightsController extends Controller
 {
+    use ValidatesRequests;
+
     public function access(Request $request)
+    {
+        $this->validate($request, [
+            'resources' => 'required_without:resource|array',
+            'resources.*.resource' => 'required',
+            'resource' => 'required_without:resources',
+        ]);
+
+        return is_array($request->resources) ?
+            $this->processRecourses($request) :
+            $this->checkResource($request);
+    }
+
+    /**
+     * Process an array of resources in request
+     * @param  Request $request
+     * @return collection of responses [ data, status, id ]
+     */
+    protected function processRecourses(Request $request)
+    {
+        return collect($request->resources)->map(function ($resource) use ($request) {
+            $kernel = app()->make(\Illuminate\Contracts\Http\Kernel::class);
+
+            $resourceRequest = tap($request->duplicate())->replace($resource);
+
+            $response = $kernel->handle($resourceRequest);
+
+            return [
+                'data' => json_decode($response->content()),
+                'status' => $response->status()
+            ];
+        });
+    }
+
+    /**
+     * Check if user has access to a resource
+     * @param  $request the request
+     * @return "true" if access granted, otherwise "false". Throws exception on error
+     */
+    protected function checkResource(Request $request)
     {
         $restrictedAccess = $this->getRestrictedAccessArray();
         $resource = $request->resource;
@@ -25,10 +67,10 @@ class FrontendRightsController extends Controller
         foreach ($restrictedAccess[$resource] as $access) {
             // If value is not set: only set model to the model class
             // If value is set: find model in db
-            if ($request->value === null) {
+            if (!isset($request->value)) {
                 $model = $access['model'];
             } else {
-                if ($request->property === null) {
+                if (!isset($request->property)) {
                     $request->merge(['property' => config('frontend-rights.default_property')]);
                 }
 
@@ -67,7 +109,7 @@ class FrontendRightsController extends Controller
         foreach ($restrictedAccessArray as $restrictedRouteName => $policyArray) {
             $newPolicyArray = [];
 
-            foreach($policyArray as $policy) {
+            foreach ($policyArray as $policy) {
                 if (!is_array($policy)) {
                     $policy = [
                         'acl' => $policy,

@@ -51,7 +51,7 @@ You can also specify what model the policy belongs to. The value of 'acl' is the
 
 The route that the application will use to access the controller.
 ```
-'route' => '/api/v1/resource/access',
+'route' => '/api/v2/resource/access',
 ```
 
 ### middleware
@@ -98,14 +98,29 @@ public function admin(User $user)
 
 To check if a user have the rights to a resource you send a post request to the route specified in config/frontend-rights.php:
 ```
-https://website.com/api/v1/resource/access
+https://website.com/api/v2/resource/access
 ```
 With a resource parameter with the name of the resource you want to check:
 ```
 resource = 'restricted-route'
 ```
 
-The response will be a string "true" if access is granted (if the user is admin in example) or "false" if access is denied (user is not admin in example).
+### Using bundled resources
+
+You can also send multiple resources in a bundle by using resources (instead of resource) as an array like:
+```
+resources = [{ resource: 'restricted-route'}, { resource: 'other-route'}]
+```
+
+### The response
+The response will be an array with all the resources that were checked:
+```
+[{ data: true, status: 200}, { data: false, status: 200}, { data: { exception: 'SomeException', message: '....', trace: ..., line: 10}, status: 500 }]
+```
+
+If access is granted, data will be true (if the user is admin in example).
+If access is denied, data will be false (user is not admin in example).
+If an exception is thrown, data will be an object with exception, message, trace etc.
 
 Then in your frontend you can parse the value and determine what to do.
 
